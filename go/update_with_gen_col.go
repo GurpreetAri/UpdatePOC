@@ -21,19 +21,12 @@ func main() {
 	log.Printf("stub execution finished at : %v", time.Now())
 }
 
-func readAndPrintTransactionCategoryNew(ctx context.Context) {
-	client, err := spanner.NewClient(ctx, dbConnString)
-	if err != nil {
-		log.Println("error: client could not created..")
-		return
-	}
-	defer client.Close()
-	log.Printf("client created for read. Reading record now: %v", time.Now())
-
+func readAndPrintTransactionCategoryNew(ctx context.Context, client *spanner.Client) {
 	stmt := spanner.Statement{
 		SQL: `SELECT Transaction_ID FROM TransactionCategoryNew;`,
 	}
 
+	log.Printf("reading record now: %v", time.Now())
 	iter := client.Single().Query(ctx, stmt)
 	row, err := iter.Next()
 	if err != nil && err != iterator.Done {
@@ -44,11 +37,10 @@ func readAndPrintTransactionCategoryNew(ctx context.Context) {
 	if row != nil {
 		var existingRecord TransactionCategoryNew
 		if err = row.ToStruct(&existingRecord); err != nil {
-			log.Println("error: unable to parse row from check if records exists query: ", err)
+			log.Println("error: unable to parse response row: ", err)
 			return
 		}
-
-		log.Printf("read Transaction ID: %s", existingRecord.TransactionID)
+		log.Printf("read transaction id: %s", existingRecord.TransactionID)
 	}
 	log.Printf("finished reading at: %v", time.Now())
 }
@@ -56,18 +48,19 @@ func readAndPrintTransactionCategoryNew(ctx context.Context) {
 func runWithGenCol() {
 	ctx := context.Background()
 
-	//Read 1 from table
-	readAndPrintTransactionCategoryNew(ctx)
-
 	client, err := spanner.NewClient(ctx, dbConnString)
 	if err != nil {
 		log.Println("error: client could not created..")
 		return
 	}
 	defer client.Close()
-	log.Printf("client created for update. Updating record now: %v", time.Now())
+	log.Println("client created...")
 
-	//Update the table
+	//Read 1 from table
+	readAndPrintTransactionCategoryNew(ctx, client)
+
+	log.Printf("udpating record now: %v", time.Now())
+	//Update table
 	stmt := spanner.Statement{
 		SQL: `UPDATE TransactionCategoryNew
 			  SET Recategorised_Category_ID = @newCategoryId,
@@ -85,9 +78,9 @@ func runWithGenCol() {
 		log.Println("error: failed to update TransactionCategoryNew table: ", err)
 		return
 	}
-
-	log.Println("no of records updated:", count)
+	log.Printf("finished updating at : %v", time.Now())
+	log.Print("no of records updated:", count)
 
 	//Read 2 from table
-	readAndPrintTransactionCategoryNew(ctx)
+	readAndPrintTransactionCategoryNew(ctx, client)
 }

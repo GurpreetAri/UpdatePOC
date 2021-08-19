@@ -21,19 +21,12 @@ func main() {
 	log.Printf("stub execution finished at : %v", time.Now())
 }
 
-func readAndPrintTransactionCategory(ctx context.Context) {
+func readAndPrintTransactionCategory(ctx context.Context, client *spanner.Client) {
 	stmt := spanner.Statement{
 		SQL: `SELECT Transaction_ID FROM TransactionCategory;`,
 	}
 
-	client, err := spanner.NewClient(ctx, dbConnString)
-	if err != nil {
-		log.Println("error: client could not created..")
-		return
-	}
-	defer client.Close()
-	log.Printf("client created for read. Reading record now: %v", time.Now())
-
+	log.Printf("reading record now: %v", time.Now())
 	iter := client.Single().Query(ctx, stmt)
 	row, err := iter.Next()
 	if err != nil && err != iterator.Done {
@@ -47,7 +40,7 @@ func readAndPrintTransactionCategory(ctx context.Context) {
 			log.Println("error: unable to parse response row: ", err)
 			return
 		}
-		log.Printf("read Transaction ID successfully: %s", existingRecord.TransactionID)
+		log.Printf("read transaction id: %s", existingRecord.TransactionID)
 	}
 	log.Printf("finished reading at: %v", time.Now())
 }
@@ -55,18 +48,19 @@ func readAndPrintTransactionCategory(ctx context.Context) {
 func runWithoutGenCol() {
 	ctx := context.Background()
 
-	//Read 1 from table
-	readAndPrintTransactionCategory(ctx)
-
 	client, err := spanner.NewClient(ctx, dbConnString)
 	if err != nil {
 		log.Println("error: client could not created..")
 		return
 	}
 	defer client.Close()
-	log.Printf("client created for update. Updating record now: %v", time.Now())
+	log.Println("client created...")
 
-	//Update the table
+	//Read 1 from table
+	readAndPrintTransactionCategory(ctx, client)
+
+	log.Printf("udpating record now: %v", time.Now())
+	//Update table
 	stmt := spanner.Statement{
 		SQL: `UPDATE TransactionCategory
 			  SET Recategorised_Category_ID = @newCategoryId,
@@ -85,8 +79,9 @@ func runWithoutGenCol() {
 		return
 	}
 
-	log.Println("no of records updated:", count)
+	log.Printf("finished updating at : %v", time.Now())
+	log.Print("no of records updated:", count)
 
 	//Read 2 from table
-	readAndPrintTransactionCategory(ctx)
+	readAndPrintTransactionCategory(ctx, client)
 }
