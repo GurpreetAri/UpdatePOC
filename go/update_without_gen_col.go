@@ -9,19 +9,19 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-type Transaction struct {
+type TransactionCategory struct {
 	TransactionID string `spanner:"Transaction_ID"`
 }
 
 func main() {
-	run()
+	runWithoutGenCol()
 	log.Printf("finished at : %v", time.Now())
 }
 
-func readAndPrintTransactions(ctx context.Context, client *spanner.Client) {
+func readAndPrintTransactionCategory(ctx context.Context, client *spanner.Client) {
 	log.Printf("Reading record now: %v", time.Now())
 	stmt := spanner.Statement{
-		SQL: `SELECT Transaction_ID FROM TransactionCategoryNew;`,
+		SQL: `SELECT Transaction_ID FROM TransactionCategory;`,
 	}
 
 	iter := client.Single().Query(ctx, stmt)
@@ -31,7 +31,7 @@ func readAndPrintTransactions(ctx context.Context, client *spanner.Client) {
 	}
 
 	if row != nil {
-		var existingRecord Transaction
+		var existingRecord TransactionCategory
 		if err = row.ToStruct(&existingRecord); err != nil {
 			log.Println("error: unable to parse row from check if records exists query: ", err)
 			return
@@ -42,7 +42,7 @@ func readAndPrintTransactions(ctx context.Context, client *spanner.Client) {
 	log.Printf("Finished reading at: %v", time.Now())
 }
 
-func run() {
+func runWithoutGenCol() {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -55,12 +55,12 @@ func run() {
 	log.Println("client created..")
 
 	//Read 1 from table
-	readAndPrintTransactions(ctx, client)
+	readAndPrintTransactionCategory(ctx, client)
 
 	//Update the table
 	log.Printf("Updating Category ID:  %v", time.Now())
 	stmt := spanner.Statement{
-		SQL: `UPDATE TransactionCategoryNew
+		SQL: `UPDATE TransactionCategory
 			  SET Recategorised_Category_ID = @newCategoryId,
 			  Last_Update_Time = PENDING_COMMIT_TIMESTAMP()
 			  WHERE Account_ID = @accountId
@@ -73,12 +73,12 @@ func run() {
 	}
 	count, err := client.PartitionedUpdate(ctx, stmt)
 	if err != nil {
-		log.Println("error: failed to update TransactionCategoryNew table: ", err)
+		log.Println("error: failed to update TransactionCategory table: ", err)
 		return
 	}
 
 	log.Println("No of records updated:", count)
 
 	//Read 2 from table
-	readAndPrintTransactions(ctx, client)
+	readAndPrintTransactionCategory(ctx, client)
 }
