@@ -9,17 +9,27 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+const dbConnString string = "projects/anz-x-fabric-np-641432/instances/test-instance/databases/example-db"
+
 type TransactionCategoryNew struct {
 	TransactionID string `spanner:"Transaction_ID"`
 }
 
 func main() {
+	log.Printf("stub execution started at : %v", time.Now())
 	runWithGenCol()
-	log.Printf("finished at : %v", time.Now())
+	log.Printf("stub execution finished at : %v", time.Now())
 }
 
-func readAndPrintTransactionCategoryNew(ctx context.Context, client *spanner.Client) {
-	log.Printf("Reading record now: %v", time.Now())
+func readAndPrintTransactionCategoryNew(ctx context.Context) {
+	client, err := spanner.NewClient(ctx, dbConnString)
+	if err != nil {
+		log.Println("error: client could not created..")
+		return
+	}
+	defer client.Close()
+	log.Printf("client created for read. Reading record now: %v", time.Now())
+
 	stmt := spanner.Statement{
 		SQL: `SELECT Transaction_ID FROM TransactionCategoryNew;`,
 	}
@@ -28,6 +38,7 @@ func readAndPrintTransactionCategoryNew(ctx context.Context, client *spanner.Cli
 	row, err := iter.Next()
 	if err != nil && err != iterator.Done {
 		log.Println("error: failed while iterating over response: ", err)
+		return
 	}
 
 	if row != nil {
@@ -37,28 +48,26 @@ func readAndPrintTransactionCategoryNew(ctx context.Context, client *spanner.Cli
 			return
 		}
 
-		log.Printf("Read Transaction ID: %s", existingRecord.TransactionID)
+		log.Printf("read Transaction ID: %s", existingRecord.TransactionID)
 	}
-	log.Printf("Finished reading at: %v", time.Now())
+	log.Printf("finished reading at: %v", time.Now())
 }
 
 func runWithGenCol() {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
-	client, err := spanner.NewClient(ctx, "projects/anz-x-fabric-np-641432/instances/test-instance/databases/example-db")
+	//Read 1 from table
+	readAndPrintTransactionCategoryNew(ctx)
+
+	client, err := spanner.NewClient(ctx, dbConnString)
 	if err != nil {
 		log.Println("error: client could not created..")
 		return
 	}
 	defer client.Close()
-	log.Println("client created..")
-
-	//Read 1 from table
-	readAndPrintTransactionCategoryNew(ctx, client)
+	log.Printf("client created for update. Updating record now: %v", time.Now())
 
 	//Update the table
-	log.Printf("Updating Category ID:  %v", time.Now())
 	stmt := spanner.Statement{
 		SQL: `UPDATE TransactionCategoryNew
 			  SET Recategorised_Category_ID = @newCategoryId,
@@ -77,8 +86,8 @@ func runWithGenCol() {
 		return
 	}
 
-	log.Println("No of records updated:", count)
+	log.Println("no of records updated:", count)
 
 	//Read 2 from table
-	readAndPrintTransactionCategoryNew(ctx, client)
+	readAndPrintTransactionCategoryNew(ctx)
 }

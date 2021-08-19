@@ -9,56 +9,64 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+const dbConnString = "projects/anz-x-fabric-np-641432/instances/test-instance/databases/example-db"
+
 type TransactionCategory struct {
 	TransactionID string `spanner:"Transaction_ID"`
 }
 
 func main() {
+	log.Printf("stub execution started at: %v", time.Now())
 	runWithoutGenCol()
-	log.Printf("finished at : %v", time.Now())
+	log.Printf("stub execution finished at : %v", time.Now())
 }
 
-func readAndPrintTransactionCategory(ctx context.Context, client *spanner.Client) {
-	log.Printf("Reading record now: %v", time.Now())
+func readAndPrintTransactionCategory(ctx context.Context) {
 	stmt := spanner.Statement{
 		SQL: `SELECT Transaction_ID FROM TransactionCategory;`,
 	}
 
-	iter := client.Single().Query(ctx, stmt)
-	row, err := iter.Next()
-	if err != nil && err != iterator.Done {
-		log.Println("error: failed while iterating over response: ", err)
-	}
-
-	if row != nil {
-		var existingRecord TransactionCategory
-		if err = row.ToStruct(&existingRecord); err != nil {
-			log.Println("error: unable to parse row from check if records exists query: ", err)
-			return
-		}
-
-		log.Printf("Read Transaction ID: %s", existingRecord.TransactionID)
-	}
-	log.Printf("Finished reading at: %v", time.Now())
-}
-
-func runWithoutGenCol() {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	client, err := spanner.NewClient(ctx, "projects/anz-x-fabric-np-641432/instances/test-instance/databases/example-db")
+	client, err := spanner.NewClient(ctx, dbConnString)
 	if err != nil {
 		log.Println("error: client could not created..")
 		return
 	}
 	defer client.Close()
-	log.Println("client created..")
+	log.Printf("client created for read. Reading record now: %v", time.Now())
+
+	iter := client.Single().Query(ctx, stmt)
+	row, err := iter.Next()
+	if err != nil && err != iterator.Done {
+		log.Println("error: failed while iterating over response: ", err)
+		return
+	}
+
+	if row != nil {
+		var existingRecord TransactionCategory
+		if err = row.ToStruct(&existingRecord); err != nil {
+			log.Println("error: unable to parse response row: ", err)
+			return
+		}
+		log.Printf("read Transaction ID successfully: %s", existingRecord.TransactionID)
+	}
+	log.Printf("finished reading at: %v", time.Now())
+}
+
+func runWithoutGenCol() {
+	ctx := context.Background()
 
 	//Read 1 from table
-	readAndPrintTransactionCategory(ctx, client)
+	readAndPrintTransactionCategory(ctx)
+
+	client, err := spanner.NewClient(ctx, dbConnString)
+	if err != nil {
+		log.Println("error: client could not created..")
+		return
+	}
+	defer client.Close()
+	log.Printf("client created for update. Updating record now: %v", time.Now())
 
 	//Update the table
-	log.Printf("Updating Category ID:  %v", time.Now())
 	stmt := spanner.Statement{
 		SQL: `UPDATE TransactionCategory
 			  SET Recategorised_Category_ID = @newCategoryId,
@@ -77,8 +85,8 @@ func runWithoutGenCol() {
 		return
 	}
 
-	log.Println("No of records updated:", count)
+	log.Println("no of records updated:", count)
 
 	//Read 2 from table
-	readAndPrintTransactionCategory(ctx, client)
+	readAndPrintTransactionCategory(ctx)
 }
