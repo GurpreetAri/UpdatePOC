@@ -15,19 +15,19 @@ type Transaction struct {
 
 func main() {
 	run()
-	log.Printf("finished %v", time.Now())
+	log.Printf("finished at : %v", time.Now())
 }
 
-func printTransactions(ctx context.Context, client *spanner.Client) {
-	log.Printf("Reading now %v", time.Now())
+func readAndPrintTransactions(ctx context.Context, client *spanner.Client) {
+	log.Printf("Reading record now: %v", time.Now())
 	stmt := spanner.Statement{
 		SQL: `SELECT Transaction_ID FROM TransactionCategoryNew;`,
 	}
-	//Reading 1
+
 	iter := client.Single().Query(ctx, stmt)
 	row, err := iter.Next()
 	if err != nil && err != iterator.Done {
-		log.Println("iterator failed on reading response: ", err)
+		log.Println("error: failed while iterating over response: ", err)
 	}
 
 	if row != nil {
@@ -37,9 +37,9 @@ func printTransactions(ctx context.Context, client *spanner.Client) {
 			return
 		}
 
-		log.Printf("Transaction ID: %s", existingRecord.TransactionID)
+		log.Printf("Read Transaction ID: %s", existingRecord.TransactionID)
 	}
-	log.Printf("Finished reading %v", time.Now())
+	log.Printf("Finished reading at: %v", time.Now())
 }
 
 func run() {
@@ -48,17 +48,17 @@ func run() {
 
 	client, err := spanner.NewClient(ctx, "projects/anz-x-fabric-np-641432/instances/test-instance/databases/example-db")
 	if err != nil {
-		log.Println("Error on creating client")
+		log.Println("error: client could not created..")
 		return
 	}
 	defer client.Close()
-	log.Println("client created...")
+	log.Println("client created..")
 
-	//Read from table
-	printTransactions(ctx, client)
+	//Read 1 from table
+	readAndPrintTransactions(ctx, client)
 
 	//Update the table
-	log.Printf("Updating the category id  %v", time.Now())
+	log.Printf("Updating Category ID:  %v", time.Now())
 	stmt := spanner.Statement{
 		SQL: `UPDATE TransactionCategoryNew
 			  SET Recategorised_Category_ID = @newCategoryId,
@@ -73,11 +73,12 @@ func run() {
 	}
 	count, err := client.PartitionedUpdate(ctx, stmt)
 	if err != nil {
-		log.Println("error: failed to update table: ", err)
+		log.Println("error: failed to update TransactionCategoryNew table: ", err)
+		return
 	}
 
-	log.Println("No of records updated:: ", count)
+	log.Println("No of records updated:", count)
 
-	// Reading 2
-	printTransactions(ctx, client)
+	//Read 2 from table
+	readAndPrintTransactions(ctx, client)
 }
