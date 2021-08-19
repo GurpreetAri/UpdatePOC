@@ -21,6 +21,7 @@ spanner using `gcloud`.
 
 1. Create test tables in spanner using these DDL stmts:
 
+Without generated column
 ```sql
     CREATE TABLE TransactionCategory (
       Account_ID STRING(36) NOT NULL,
@@ -35,6 +36,7 @@ spanner using `gcloud`.
     ) PRIMARY KEY(Account_ID, Transaction_ID, Category_Type)
 ```
 
+With generated column
 ```sql
     CREATE TABLE TransactionCategoryNew (
       Account_ID STRING(36) NOT NULL,

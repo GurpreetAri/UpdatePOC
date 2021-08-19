@@ -8,7 +8,14 @@ Make sure you have python 3 installed.
     source venv/bin/activate
     pip install -r requirements.txt
     ```
-2. Run the project
+2. Create a test instance and create tables in it using DDL from README.md
+3. Replace project_id, instance-id and database_id values in the .py clients to point to your config.
+4. Run the individual clients for testing against table with/without generated column.
+   
    ```bash
-   python client.py
+   python update_with_gen_col.py
+   ```
+
+ ```bash
+   python update_without_gen_col.py
    ```
