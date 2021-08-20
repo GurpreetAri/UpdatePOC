@@ -1,4 +1,4 @@
-### Setup the project
+### Set up the project
 
 Make sure you have go installed. (Tested using `go1.16.5` and `cloud.google.com/go/spanner 1.24.1`)
 

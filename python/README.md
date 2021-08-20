@@ -1,4 +1,4 @@
-### Setup the project.
+### Set up the project.
 
 Make sure you have python 3 installed.
 

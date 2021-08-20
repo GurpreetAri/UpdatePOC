@@ -16,17 +16,24 @@ type TransactionCategoryNew struct {
 }
 
 func main() {
-	log.Printf("stub execution started at : %v", time.Now())
+	log.Printf("client execution started at : %v", time.Now())
 	runWithGenCol()
-	log.Printf("stub execution finished at : %v", time.Now())
+	log.Printf("client execution finished at : %v", time.Now())
 }
 
-func readAndPrintTransactionCategoryNew(ctx context.Context, client *spanner.Client) {
+func readAndPrintTransactionCategoryNew(ctx context.Context) {
 	stmt := spanner.Statement{
 		SQL: `SELECT Transaction_ID FROM TransactionCategoryNew;`,
 	}
 
-	log.Printf("reading record now: %v", time.Now())
+	client, err := spanner.NewClient(ctx, dbConnString)
+	if err != nil {
+		log.Println("error: client could not created for read..")
+		return
+	}
+	defer client.Close()
+	log.Printf("client created for read, reading record now: %v", time.Now())
+
 	iter := client.Single().Query(ctx, stmt)
 	row, err := iter.Next()
 	if err != nil && err != iterator.Done {
@@ -48,18 +55,17 @@ func readAndPrintTransactionCategoryNew(ctx context.Context, client *spanner.Cli
 func runWithGenCol() {
 	ctx := context.Background()
 
+	//Read 1 from table
+	readAndPrintTransactionCategoryNew(ctx)
+
 	client, err := spanner.NewClient(ctx, dbConnString)
 	if err != nil {
-		log.Println("error: client could not created..")
+		log.Println("error: client could not created for update..")
 		return
 	}
 	defer client.Close()
-	log.Println("client created...")
 
-	//Read 1 from table
-	readAndPrintTransactionCategoryNew(ctx, client)
-
-	log.Printf("udpating record now: %v", time.Now())
+	log.Printf("client created for update, updating record now: %v", time.Now())
 	//Update table
 	stmt := spanner.Statement{
 		SQL: `UPDATE TransactionCategoryNew
@@ -82,5 +88,5 @@ func runWithGenCol() {
 	log.Print("no of records updated:", count)
 
 	//Read 2 from table
-	readAndPrintTransactionCategoryNew(ctx, client)
+	readAndPrintTransactionCategoryNew(ctx)
 }
