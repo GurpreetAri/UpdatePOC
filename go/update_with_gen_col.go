@@ -9,7 +9,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-const dbConnString string = "projects/anz-x-fabric-np-641432/instances/test-instance/databases/example-db"
+const interleavedDBConnString string = "projects/anz-x-fabric-np-641432/instances/test-instance/databases/interleaved1"
 
 type TransactionCategoryNew struct {
 	TransactionID string `spanner:"Transaction_ID"`
@@ -17,8 +17,15 @@ type TransactionCategoryNew struct {
 
 func main() {
 	log.Printf("client execution started at : %v", time.Now())
-	runWithGenCol()
-	log.Printf("client execution finished at : %v", time.Now())
+	ctx := context.Background()
+	log.Println("client created...")
+	client, err := spanner.NewClient(ctx, interleavedDBConnString)
+	if err != nil {
+		log.Println("error: client could not created..")
+		return
+	}
+	defer client.Close()
+	runWithGenCol(ctx, client)
 }
 
 func readAndPrintTransactionCategoryNew(ctx context.Context) {
@@ -52,18 +59,10 @@ func readAndPrintTransactionCategoryNew(ctx context.Context) {
 	log.Printf("finished reading at: %v", time.Now())
 }
 
-func runWithGenCol() {
-	ctx := context.Background()
-
+func runWithGenCol(ctx context.Context, client *spanner.Client) {
 	//Read 1 from table
 	readAndPrintTransactionCategoryNew(ctx)
 
-	client, err := spanner.NewClient(ctx, dbConnString)
-	if err != nil {
-		log.Println("error: client could not created for update..")
-		return
-	}
-	defer client.Close()
 
 	log.Printf("client created for update, updating record now: %v", time.Now())
 	//Update table
@@ -74,9 +73,8 @@ func runWithGenCol() {
 			  WHERE Account_ID = @accountId
 			  AND Transaction_ID = @transactionId;`,
 		Params: map[string]interface{}{
-			"newCategoryId": "055a6b93-cf12-5637-9c65-d44f61615e97",
-			"accountId":     "f6f3c93f-9fd0-5aeb-8599-238a88c5f906",
-			"transactionId": "00000000-0000-0000-0000-000000000015",
+			"newCategoryId": "new_cat2",
+			"transactionId": "transaction_id1",
 		},
 	}
 	count, err := client.PartitionedUpdate(ctx, stmt)
