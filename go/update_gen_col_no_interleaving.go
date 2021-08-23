@@ -54,7 +54,8 @@ func readAndPrintChildTable(ctx context.Context) {
 }
 
 func runGenColNoInterleaving() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	defer cancel()
 
 	//Read 1 from table
 	readAndPrintChildTable(ctx)
