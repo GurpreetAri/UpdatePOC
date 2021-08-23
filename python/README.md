@@ -10,12 +10,12 @@ Make sure you have python 3 installed.
     ```
 2. Create a test instance and create tables in it using DDL from README.md
 3. Replace project_id, instance-id and database_id values in the .py clients to point to your config.
-4. Run the individual clients for testing against table with/without generated column.
+3. Run the individual clients for testing against table with generated column and with or without interleaving.
    
    ```bash
-   python update_with_gen_col.py
+   python update_gen_col_interleaving.py
    ```
 
  ```bash
-   python update_without_gen_col.py
+   python update_gen_col_no_interleaving.py
    ```

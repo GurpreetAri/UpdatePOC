@@ -1,9 +1,9 @@
 # Imports the Google Cloud Client Library.
 from google.cloud import spanner
 
-project_id="anz-x-fabric-np-641432"
+project_id="test-project"
 instance_id = "test-instance"
-database_id = "interleaved1"
+database_id = "test-database"
 
 # Instantiate a client.
 spanner_client = spanner.Client(project=project_id)
@@ -15,25 +15,25 @@ instance = spanner_client.instance(instance_id)
 database = instance.database(database_id)
 
 def printTransactions(database):
-    select_query = "SELECT Transaction_ID FROM TransactionCategoryNew"
+    select_query = "SELECT User_ID FROM ChildTableInterleaved"
     with database.snapshot() as snapshot:
         results = snapshot.execute_sql(select_query)
         for row in results:
-            print(u"Transaction_ID: {}".format(*row))
+            print(u"User_ID: {}".format(*row))
 
 
-dml = '''UPDATE TransactionCategoryNew
-     SET Recategorised_Category_ID = @newCategoryId,
+dml = '''UPDATE ChildTableInterleaved
+     SET New_Child_ID = @newChildId,
      Last_Update_Time = PENDING_COMMIT_TIMESTAMP()
-     WHERE Transaction_ID = @transactionId'''
+     WHERE User_ID = @userId'''
 
 params = {
-    "newCategoryId": "new_cat2",
-    "transactionId": "transaction_id1",
+    "userId": "user_id",
+    "newChildId": "new_child_id",
 }
 param_types = {
-    "newCategoryId": spanner.param_types.STRING,
-    "transactionId": spanner.param_types.STRING,
+    "userId": spanner.param_types.STRING,
+    "newChildId": spanner.param_types.STRING,
 }
 
 row_ct = database.execute_partitioned_dml(

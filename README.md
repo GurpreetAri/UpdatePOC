@@ -16,10 +16,14 @@ However, when the table is interleaved and has a generated column, the update fa
 The spanner connection is not released in time, because of which the use case fails with the `Error: context deadline exceeded` error.
 
 
+### Tools required
+
+1. [Spanner emulator](https://cloud.google.com/spanner/docs/emulator) - You can pull the latest image from [here](https://console.cloud.google.com/gcr/images/cloud-spanner-emulator/GLOBAL/emulator).
+1. [Spanner-cli](https://github.com/cloudspannerecosystem/spanner-cli)
+
 ### Steps to replicate the issue
 
-1. Create test tables in spanner using these DDL stmts:
-
+1. Create a new database in spanner-emulator and create test tables using these DDL stmts:
 
 ```sql
     CREATE TABLE ParentTable (
@@ -31,7 +35,7 @@ The spanner connection is not released in time, because of which the use case fa
     ) PRIMARY KEY(Parent_ID, User_ID);
 ```
 
-Child table with generated column and without interleaving
+Child table with generated column and without interleaving:
 ```sql
    CREATE TABLE ChildTable (
                Parent_ID STRING(36) NOT NULL,
@@ -46,7 +50,7 @@ Child table with generated column and without interleaving
    ) PRIMARY KEY(Parent_ID, User_ID, Level);
 ```
 
-Child table with generated column and with interleaving
+Child table with generated column and with interleaving:
 ```sql
    CREATE TABLE ChildTableInterleaved(
              Parent_ID STRING(36) NOT NULL,
