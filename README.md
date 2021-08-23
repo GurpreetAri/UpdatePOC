@@ -33,7 +33,7 @@ The spanner connection is not released in time, because of which the use case fa
     ) PRIMARY KEY(Parent_ID, User_ID);
 ```
 
-Child table with generated column and interleaving:
+Standalone table with generated column and NO interleaving:
 ```sql
    CREATE TABLE ChildTable (
                Parent_ID STRING(36) NOT NULL,
