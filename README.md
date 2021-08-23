@@ -27,15 +27,13 @@ The spanner connection is not released in time, because of which the use case fa
 
 ```sql
     CREATE TABLE ParentTable (
-                                Parent_ID STRING(36) NOT NULL,
-                                User_ID STRING(36) NOT NULL,
-                                Last_Update_Time TIMESTAMP NOT NULL OPTIONS (
-                                   allow_commit_timestamp = true
-                                   ),
+                 Parent_ID STRING(36) NOT NULL,
+                 User_ID STRING(36) NOT NULL,
+                 Last_Update_Time TIMESTAMP NOT NULL OPTIONS ( allow_commit_timestamp = true ),
     ) PRIMARY KEY(Parent_ID, User_ID);
 ```
 
-Child table with generated column and without interleaving:
+Child table with generated column and interleaving:
 ```sql
    CREATE TABLE ChildTable (
                Parent_ID STRING(36) NOT NULL,
@@ -44,13 +42,11 @@ Child table with generated column and without interleaving:
                Original_Child_ID STRING(36) NOT NULL,
                New_Child_ID STRING(36),
                Primary_Child_ID STRING(36) AS (IF(New_Child_ID IS NOT NULL, New_Child_ID, Original_Child_ID)) STORED,
-               Last_Update_Time TIMESTAMP NOT NULL OPTIONS (
-                  allow_commit_timestamp = true
-                  )
+               Last_Update_Time TIMESTAMP NOT NULL OPTIONS ( allow_commit_timestamp = true )
    ) PRIMARY KEY(Parent_ID, User_ID, Level);
 ```
 
-Child table with generated column and with interleaving:
+Child table with generated column and interleaving:
 ```sql
    CREATE TABLE ChildTableInterleaved(
              Parent_ID STRING(36) NOT NULL,
@@ -59,9 +55,7 @@ Child table with generated column and with interleaving:
              Original_Child_ID STRING(36) NOT NULL,
              New_Child_ID STRING(36),
              Primary_Child_ID STRING(36) AS (IF(New_Child_ID IS NOT NULL, New_Child_ID, Original_Child_ID)) STORED,
-             Last_Update_Time TIMESTAMP NOT NULL OPTIONS (
-                allow_commit_timestamp = true
-                )
+             Last_Update_Time TIMESTAMP NOT NULL OPTIONS ( allow_commit_timestamp = true )
    ) PRIMARY KEY(Parent_ID, User_ID, Level),
    INTERLEAVE IN PARENT ParentTable ON DELETE NO ACTION;
 ```
@@ -81,4 +75,3 @@ Child table with generated column and with interleaving:
 
 3. Navigate to the go and python stubs to execute them sequentially. Instructions to run them are enclosed within the 
    individual directories.
-   

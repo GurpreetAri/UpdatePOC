@@ -1,6 +1,7 @@
 # Imports the Google Cloud Client Library.
 from google.cloud import spanner
 
+# Replace these with your own parameters
 project_id="test-project"
 instance_id = "test-instance"
 database_id = "test-database"

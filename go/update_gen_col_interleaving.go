@@ -9,6 +9,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+// Replace this with your own connection string
 const dbConnString = "projects/test-project/instances/test-instance/databases/test-database"
 
 type ChildTableInterleaved struct {
