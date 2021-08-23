@@ -3,7 +3,7 @@ from google.cloud import spanner
 
 project_id="anz-x-fabric-np-641432"
 instance_id = "test-instance"
-database_id = "example-db"
+database_id = "interleaved1"
 
 # Instantiate a client.
 spanner_client = spanner.Client(project=project_id)
@@ -28,8 +28,8 @@ dml = '''UPDATE TransactionCategoryNew
      WHERE Transaction_ID = @transactionId'''
 
 params = {
-    "newCategoryId": "055a6b93-cf12-5637-9c65-d44f61615e97",
-    "transactionId": "00000000-0000-0000-0000-000000000015",
+    "newCategoryId": "new_cat2",
+    "transactionId": "transaction_id1",
 }
 param_types = {
     "newCategoryId": spanner.param_types.STRING,

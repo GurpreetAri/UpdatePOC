@@ -7,9 +7,9 @@ Make sure you have go installed. (Tested using `go1.16.5` and `cloud.google.com/
 3. Run the individual clients for testing against table with/without generated column.
 
     ```bash
-    go run update_with_gen_column.go
+    go run update_with_gen_col.go
     ```
     
     ```bash
-    go run update_without_gen_column.go
+    go run update_without_gen_col.go
     ```
