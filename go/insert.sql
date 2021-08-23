@@ -1,45 +1,35 @@
-CREATE TABLE Transaction (
-     Account_ID STRING(36) NOT NULL,
-     Transaction_ID STRING(36) NOT NULL,
-     Last_Update_Time TIMESTAMP NOT NULL OPTIONS (
-         allow_commit_timestamp = true
-         ),
-) PRIMARY KEY(Account_ID, Transaction_ID);
+CREATE TABLE ParentTable (
+         Parent_ID STRING(36) NOT NULL,
+         User_ID STRING(36) NOT NULL,
+         Last_Update_Time TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true))
+PRIMARY KEY(Parent_ID, User_ID);
 
-CREATE TABLE TransactionCategoryNew (
-    Account_ID STRING(36) NOT NULL,
-    Transaction_ID STRING(36) NOT NULL,
-    Category_Type STRING(100) NOT NULL,
-    Original_Category_ID STRING(36) NOT NULL,
-    Recategorised_Category_ID STRING(36),
-    Primary_Category_ID STRING(36) AS (IF(Recategorised_Category_ID IS NOT NULL, Recategorised_Category_ID, Original_Category_ID)) STORED,
-    Last_Update_Time TIMESTAMP NOT NULL OPTIONS (
-        allow_commit_timestamp = true
-    )
-) PRIMARY KEY(Account_ID, Transaction_ID, Category_Type);
+CREATE TABLE ChildTable (
+        Parent_ID STRING(36) NOT NULL,
+        User_ID STRING(36) NOT NULL,
+        Original_Child_ID STRING(36) NOT NULL,
+        New_Child_ID STRING(36),
+        Primary_Child_ID STRING(36) AS (IF(New_Child_ID IS NOT NULL, New_Child_ID, Original_Child_ID)) STORED,
+        Last_Update_Time TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true))
+PRIMARY KEY(Parent_ID, User_ID);
 
-INSERT INTO
-    TRANSACTION (Account_ID,
-                 Transaction_ID,
-                 Last_Update_Time)
-VALUES
-    ('account_id1',
-        'transaction_id1',
-        '2021-08-20T00:00:00Z'
-    );
+CREATE TABLE ChildTableInterleaved(
+        Parent_ID STRING(36) NOT NULL,
+        User_ID STRING(36) NOT NULL,
+        Original_Child_ID STRING(36) NOT NULL,
+        New_Child_ID STRING(36),
+        Primary_Child_ID STRING(36) AS (IF(New_Child_ID IS NOT NULL, New_Child_ID, Original_Child_ID)) STORED,
+        Last_Update_Time TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp = true))
+        PRIMARY KEY(Parent_ID, User_ID);
+) PRIMARY KEY(Parent_ID, User_ID)
+INTERLEAVE IN PARENT ParentTable ON DELETE NO ACTION;
 
-INSERT INTO
-    TransactionCategoryNew (Account_ID,
-                            Transaction_ID,
-                            Last_Update_Time,
-                            Category_Type,
-                            Original_Category_ID,
-                            Recategorised_Category_ID)
-VALUES
-    ('account_id1',
-     'transaction_id1',
-    PENDING_COMMIT_TIMESTAMP(),
-     'category_type1',
-     'original_category1',
-     'recat_category1'
-    );
+
+INSERT INTO ParentTable (Parent_ID, User_ID, Last_Update_Time)
+VALUES('parent_id', 'user_id', '2021-08-20T00:00:00Z');
+
+INSERT INTO ChildTable (Parent_ID, User_ID, Last_Update_Time, Original_Child_ID)
+VALUES ('parent_id', 'user_id', PENDING_COMMIT_TIMESTAMP(), 'original_child_id');
+
+INSERT INTO ChildTableInterleaved(Parent_ID, User_ID, Last_Update_Time, Original_Child_ID)
+VALUES ('parent_id', 'user_id', PENDING_COMMIT_TIMESTAMP(), 'original_child_id');

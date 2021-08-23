@@ -9,21 +9,21 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-const dbConnString = "projects/anz-x-fabric-np-641432/instances/test-instance/databases/example-db"
+const dbConnString = "projects/test-project/instances/test-instance/databases/test-database"
 
-type TransactionCategory struct {
-	TransactionID string `spanner:"Transaction_ID"`
+type ChildTable struct {
+	UserID string `spanner:"User_ID"`
 }
 
 func main() {
 	log.Printf("client execution started at: %v", time.Now())
-	runWithoutGenCol()
+	runGenColNoInterleaving()
 	log.Printf("client execution finished at : %v", time.Now())
 }
 
-func readAndPrintTransactionCategory(ctx context.Context) {
+func readAndPrintChildTable(ctx context.Context) {
 	stmt := spanner.Statement{
-		SQL: `SELECT Transaction_ID FROM TransactionCategory;`,
+		SQL: `SELECT User_ID FROM ChildTable;`,
 	}
 
 	client, err := spanner.NewClient(ctx, dbConnString)
@@ -42,21 +42,21 @@ func readAndPrintTransactionCategory(ctx context.Context) {
 	}
 
 	if row != nil {
-		var existingRecord TransactionCategory
+		var existingRecord ChildTable
 		if err = row.ToStruct(&existingRecord); err != nil {
 			log.Println("error: unable to parse response row: ", err)
 			return
 		}
-		log.Printf("read transaction id: %s", existingRecord.TransactionID)
+		log.Printf("read user id: %s", existingRecord.UserID)
 	}
 	log.Printf("finished reading at: %v", time.Now())
 }
 
-func runWithoutGenCol() {
+func runGenColNoInterleaving() {
 	ctx := context.Background()
 
 	//Read 1 from table
-	readAndPrintTransactionCategory(ctx)
+	readAndPrintChildTable(ctx)
 
 	client, err := spanner.NewClient(ctx, dbConnString)
 	if err != nil {
@@ -68,20 +68,18 @@ func runWithoutGenCol() {
 
 	//Update table
 	stmt := spanner.Statement{
-		SQL: `UPDATE TransactionCategory
-			  SET Recategorised_Category_ID = @newCategoryId,
+		SQL: `UPDATE ChildTable
+			  SET New_Child_ID = @newChildId,
 			  Last_Update_Time = PENDING_COMMIT_TIMESTAMP()
-			  WHERE Account_ID = @accountId
-			  AND Transaction_ID = @transactionId;`,
+			  WHERE User_ID = @userId;`,
 		Params: map[string]interface{}{
-			"newCategoryId": "055a6b93-cf12-5637-9c65-d44f61615e97",
-			"accountId":     "f6f3c93f-9fd0-5aeb-8599-238a88c5f906",
-			"transactionId": "00000000-0000-0000-0000-000000000015",
+			"newChildId": "new_child_id",
+			"userId":     "user_id",
 		},
 	}
 	count, err := client.PartitionedUpdate(ctx, stmt)
 	if err != nil {
-		log.Println("error: failed to update TransactionCategory table: ", err)
+		log.Println("error: failed to update ChildTable table: ", err)
 		return
 	}
 
@@ -89,5 +87,5 @@ func runWithoutGenCol() {
 	log.Print("no of records updated:", count)
 
 	//Read 2 from table
-	readAndPrintTransactionCategory(ctx)
+	readAndPrintChildTable(ctx)
 }
